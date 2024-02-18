@@ -1,0 +1,15 @@
+/.vscode
+/node_modules
+./dist
+
+/next
+/.next
+next.config.js
+
+
+*.env
+.env
+.env.local
+.env.sample
+
+README.md
