@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import multer from "multer";
+import { errorHandler } from "./middlewares/error.middleware.js";
 const upload = multer();
 const app = express();
 
@@ -29,5 +30,11 @@ import userRouter from "./routes/user.route.js"
  **********************/
 
 app.use("/api/v1/users", userRouter)
+
+
+/*******************************
+ * Global ApiError as response *
+ *******************************/
+app.use(errorHandler);
 
 export default app;

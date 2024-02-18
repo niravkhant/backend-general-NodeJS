@@ -13,6 +13,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
  * @description This middleware is responsible to catch the errors from any request handler wrapped inside the {@link asyncHandler}
  */
 const errorHandler = (err, req, res, next) => {
+  console.log("res from error middleware")
   let error = err;
 
   // Check if the error is an instance of an ApiError class which extends native Error class
@@ -35,8 +36,6 @@ const errorHandler = (err, req, res, next) => {
     message: error.message,
     ...(process.env.NODE_ENV === "development" ? { stack: error.stack } : {}), // Error stack traces should be visible in development for debugging
   };
-
-  logger.error(`${error.message}`);
 
 //   removeUnusedMulterImageFilesOnError(req);
   // Send error response
