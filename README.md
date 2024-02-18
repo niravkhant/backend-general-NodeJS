@@ -124,3 +124,7 @@ Install cookie-parser and cors
 ```
 npm i cookie-parser cors
 ```
+Install bcrypt and JWT
+```
+npm i bcrypt jsonwebtoken
+```
