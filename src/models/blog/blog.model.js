@@ -6,6 +6,9 @@ const blogSchema = new Schema(
       type: String,
       required: true,
     },
+    image:{
+      type: String
+    },
     description: {
       type: String,
       required: true,
@@ -20,13 +23,11 @@ const blogSchema = new Schema(
       {
         type: Schema.Types.ObjectId,
         ref: "BlogCategory",
-        required: true
       },
     ],
     tags: [
       {
         type: String,
-        required: true
       },
     ],
     author: {
