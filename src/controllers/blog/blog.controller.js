@@ -4,18 +4,38 @@ import { ApiResponse } from "../../utils/ApiResponse.js";
 import { User } from "../../models/user.model.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import { Blog } from "../../models/blog/blog.model.js";
+import { BlogCategory } from "../../models/blog/blogCategory.model.js";
+
+const createCategory = asyncHandler(async(req, res)=>{
+  const name = req.body.name;
+
+  if(name.trim() === ""){
+    throw new ApiError(401, "Category name should not be empty..!")
+  }
+  const existedCategory = await BlogCategory.findOne({name});
+  if(existedCategory){
+    throw new ApiError(401, "category already exists")
+  }
+  const author = req.user._id;
+  const blogCategory = await BlogCategory.create({
+    name,
+    author: author,
+  });
+  const createdBlogCategory = await BlogCategory.findById(blogCategory._id);
+  if (!createdBlogCategory) {
+    throw new ApiError(500, "Something went wrong while creating the blog category");
+  }
+  return res
+    .status(201)
+    .json(new ApiResponse(201, createdBlogCategory, "Blog category created Successfully"));
+})
 
 const createBlog = asyncHandler(async (req, res) => {
-  // console.log(req.body);
   const {
     title,
     description,
-    paragraph_HTML,
-    special_quotes,
     categories,
-    tags,
   } = req.body;
-  console.log(req.files);
   const imageLocalPath = req.files?.image[0]?.path;
 
   if (!imageLocalPath) {
@@ -34,20 +54,30 @@ const createBlog = asyncHandler(async (req, res) => {
     throw new ApiError(400, "starred fields are required");
   }
 
-  const existedBlog = await Blog.findOne(title);
+  const existedBlog = await Blog.findOne({title});
 
   if(existedBlog){
     throw new ApiError(401, "Blog already exists.")
   }
+
+  const category = await BlogCategory.find({name:categories})
+
+  if(category < 1){
+    throw new ApiError(401, "Category does not exists");
+  }
+
+  const categoryID = category.map((item)=>(
+    item._id
+  ))
+
+  console.log(categoryID);
 
   const author = req.user._id;
   const blog = await Blog.create({
     title,
     description,
     image: image?.url || "",
-    paragraph_HTML,
-    special_quotes,
-    tags,
+    categories: categoryID, 
     author: author,
   });
 
@@ -63,11 +93,15 @@ const createBlog = asyncHandler(async (req, res) => {
 });
 
 const getAllBlogs = asyncHandler(async(req, res)=>{
-  const allBlogs = await Blog.find()
+  const allBlogs = await Blog.find();
+
+  if(!allBlogs){
+    throw new ApiError(400, "Something went wrong while getting the blogs");
+  }
 
   return res
     .status(200)
     .json(new ApiResponse(200, allBlogs, "All Blogs"));
 })
 
-export { createBlog, getAllBlogs };
+export {createCategory, createBlog, getAllBlogs };

@@ -207,6 +207,18 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, req.user, "current user fetched successfully"));
 });
 
+const getAllUsers = asyncHandler(async(req, res)=>{
+  const allUsers = await User.find().select("-password -refreshToken");
+
+  if(!allUsers) {
+    throw new ApiError(400, "All Users not found or something went wrong")
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, allUsers, "All Users"));
+})
+
 export {
   registerUser,
   loginUser,
@@ -214,4 +226,5 @@ export {
   refreshAccessToken,
   changeCurrentPassword,
   getCurrentUser,
+  getAllUsers
 };

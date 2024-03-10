@@ -13,23 +13,23 @@ const blogSchema = new Schema(
       type: String,
       required: true,
     },
-    paragraph_HTML: {
-      type: String,
-    },
-    special_quotes: {
-      type: String,
-    },
+    // paragraph_HTML: {
+    //   type: String,
+    // },
+    // special_quotes: {
+    //   type: String,
+    // },
     categories: [
       {
         type: Schema.Types.ObjectId,
         ref: "BlogCategory",
       },
     ],
-    tags: [
-      {
-        type: String,
-      },
-    ],
+    // tags: [
+    //   {
+    //     type: String,
+    //   },
+    // ],
     author: {
       type: Schema.Types.ObjectId,
       ref: "User",
