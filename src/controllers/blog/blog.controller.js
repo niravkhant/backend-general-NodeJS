@@ -6,15 +6,15 @@ import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import { Blog } from "../../models/blog/blog.model.js";
 import { BlogCategory } from "../../models/blog/blogCategory.model.js";
 
-const createCategory = asyncHandler(async(req, res)=>{
+const createCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
 
-  if(name.trim() === ""){
-    throw new ApiError(401, "Category name should not be empty..!")
+  if (name.trim() === "") {
+    throw new ApiError(401, "Category name should not be empty..!");
   }
-  const existedCategory = await BlogCategory.findOne({name});
-  if(existedCategory){
-    throw new ApiError(401, "category already exists")
+  const existedCategory = await BlogCategory.findOne({ name });
+  if (existedCategory) {
+    throw new ApiError(401, "category already exists");
   }
   const author = req.user._id;
   const blogCategory = await BlogCategory.create({
@@ -23,19 +23,24 @@ const createCategory = asyncHandler(async(req, res)=>{
   });
   const createdBlogCategory = await BlogCategory.findById(blogCategory._id);
   if (!createdBlogCategory) {
-    throw new ApiError(500, "Something went wrong while creating the blog category");
+    throw new ApiError(
+      500,
+      "Something went wrong while creating the blog category"
+    );
   }
   return res
     .status(201)
-    .json(new ApiResponse(201, createdBlogCategory, "Blog category created Successfully"));
-})
+    .json(
+      new ApiResponse(
+        201,
+        createdBlogCategory,
+        "Blog category created Successfully"
+      )
+    );
+});
 
 const createBlog = asyncHandler(async (req, res) => {
-  const {
-    title,
-    description,
-    categories,
-  } = req.body;
+  const { title, description, categories } = req.body;
   const imageLocalPath = req.files?.image[0]?.path;
 
   if (!imageLocalPath) {
@@ -48,27 +53,23 @@ const createBlog = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Image is required");
   }
 
-  if (
-    [title, description].some((item) => item?.trim() === "")
-  ) {
+  if ([title, description].some((item) => item?.trim() === "")) {
     throw new ApiError(400, "starred fields are required");
   }
 
-  const existedBlog = await Blog.findOne({title});
+  const existedBlog = await Blog.findOne({ title });
 
-  if(existedBlog){
-    throw new ApiError(401, "Blog already exists.")
+  if (existedBlog) {
+    throw new ApiError(401, "Blog already exists.");
   }
 
-  const category = await BlogCategory.find({name:categories})
+  const category = await BlogCategory.find({ name: categories });
 
-  if(category < 1){
+  if (category < 1) {
     throw new ApiError(401, "Category does not exists");
   }
 
-  const categoryID = category.map((item)=>(
-    item._id
-  ))
+  const categoryID = category.map((item) => item._id);
 
   console.log(categoryID);
 
@@ -77,7 +78,7 @@ const createBlog = asyncHandler(async (req, res) => {
     title,
     description,
     image: image?.url || "",
-    categories: categoryID, 
+    categories: categoryID,
     author: author,
   });
 
@@ -92,16 +93,57 @@ const createBlog = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdBlog, "Blog created Successfully"));
 });
 
-const getAllBlogs = asyncHandler(async(req, res)=>{
-  const allBlogs = await Blog.find();
+// const getAllBlogs = asyncHandler(async(req, res)=>{
+//   const allBlogs = await Blog.find();
 
-  if(!allBlogs){
-    throw new ApiError(400, "Something went wrong while getting the blogs");
+//   if(!allBlogs){
+//     throw new ApiError(400, "Something went wrong while getting the blogs");
+//   }
+
+//   return res
+//     .status(200)
+//     .json(new ApiResponse(200, allBlogs, "All Blogs"));
+// })
+const getAllBlogs = asyncHandler(async (req, res) => {
+  const allBlogs = await Blog.aggregate([
+    {
+      $lookup: {
+        from: "users",
+        localField: "author",
+        foreignField: "_id",
+        as: "author",
+      },
+    },
+    {
+      $addFields: {
+        author: {
+          $first: "$author.fullname",
+        },
+      },
+    },
+    {
+     $lookup: {
+        from: "blogcategories",
+        localField: "categories",
+        foreignField: "_id",
+        as: "categories"
+      }
+    },
+    {
+      $addFields:
+        {
+          categories: {
+            $first: "$categories.name",
+          },
+        },
+    },
+  ]);
+
+  if (!allBlogs?.length) {
+    throw new ApiError(404, "Blogs does not exists");
   }
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, allBlogs, "All Blogs"));
-})
+  return res.status(200).json(new ApiResponse(200, allBlogs, "blogs fetched successfully" ));
+});
 
-export {createCategory, createBlog, getAllBlogs };
+export { createCategory, createBlog, getAllBlogs };
