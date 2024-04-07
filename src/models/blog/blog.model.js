@@ -30,6 +30,11 @@ const blogSchema = new Schema(
     //     type: String,
     //   },
     // ],
+    status:{
+      type: Schema.Types.ObjectId,
+      enum: ["active", "inactive"],
+      default: "inactive",
+    },
     author: {
       type: Schema.Types.ObjectId,
       ref: "User",

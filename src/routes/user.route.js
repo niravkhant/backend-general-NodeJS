@@ -24,7 +24,7 @@ router.route("/refresh-token").post(refreshAccessToken);
 router.route("/change-password").post(verifyJWT, changeCurrentPassword);
 router
   .route("/current-user")
-  .get(verifyJWT, isAuthorized("editor"), getCurrentUser);
+  .get(verifyJWT, getCurrentUser);
 router.route("/get-all-users").get(getAllUsers)
 
 export default router;
