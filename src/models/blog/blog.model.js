@@ -31,7 +31,7 @@ const blogSchema = new Schema(
     //   },
     // ],
     status:{
-      type: Schema.Types.ObjectId,
+      type: String,
       enum: ["active", "inactive"],
       default: "inactive",
     },

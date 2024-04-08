@@ -40,7 +40,7 @@ const createCategory = asyncHandler(async (req, res) => {
 });
 
 const createBlog = asyncHandler(async (req, res) => {
-  const { title, description, categories } = req.body;
+  const { title, description, categories, status } = req.body;
   const imageLocalPath = req.files?.image[0]?.path;
 
   if (!imageLocalPath) {
@@ -65,7 +65,7 @@ const createBlog = asyncHandler(async (req, res) => {
 
   const category = await BlogCategory.find({ name: categories });
 
-  if (category < 1) {
+  if (!category) {
     throw new ApiError(401, "Category does not exists");
   }
 
@@ -80,6 +80,7 @@ const createBlog = asyncHandler(async (req, res) => {
     image: image?.url || "",
     categories: categoryID,
     author: author,
+    status: status
   });
 
   const createdBlog = await Blog.findById(blog._id);
