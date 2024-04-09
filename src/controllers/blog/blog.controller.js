@@ -80,7 +80,7 @@ const createBlog = asyncHandler(async (req, res) => {
     image: image?.url || "",
     categories: categoryID,
     author: author,
-    status: status
+    status: status,
   });
 
   const createdBlog = await Blog.findById(blog._id);
@@ -94,17 +94,6 @@ const createBlog = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdBlog, "Blog created Successfully"));
 });
 
-// const getAllBlogs = asyncHandler(async(req, res)=>{
-//   const allBlogs = await Blog.find();
-
-//   if(!allBlogs){
-//     throw new ApiError(400, "Something went wrong while getting the blogs");
-//   }
-
-//   return res
-//     .status(200)
-//     .json(new ApiResponse(200, allBlogs, "All Blogs"));
-// })
 const getAllBlogs = asyncHandler(async (req, res) => {
   const allBlogs = await Blog.aggregate([
     {
@@ -123,20 +112,19 @@ const getAllBlogs = asyncHandler(async (req, res) => {
       },
     },
     {
-     $lookup: {
+      $lookup: {
         from: "blogcategories",
         localField: "categories",
         foreignField: "_id",
-        as: "categories"
-      }
+        as: "categories",
+      },
     },
     {
-      $addFields:
-        {
-          categories: {
-            $first: "$categories.name",
-          },
+      $addFields: {
+        categories: {
+          $first: "$categories.name",
         },
+      },
     },
   ]);
 
@@ -144,7 +132,20 @@ const getAllBlogs = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Blogs does not exists");
   }
 
-  return res.status(200).json(new ApiResponse(200, allBlogs, "blogs fetched successfully" ));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, allBlogs, "blogs fetched successfully"));
 });
 
-export { createCategory, createBlog, getAllBlogs };
+const deleteBlog = asyncHandler(async (req, res) => {
+  const blogId = req.params.id;
+
+  const blog = await Blog.findByIdAndDelete(blogId);
+  if (!blog) {
+    throw new ApiError(404, "Blog not Found");
+  }
+  return res
+    .status(201)
+    .json(new ApiResponse(201, blog, "Blog deleted successfully"))
+});
+export { createCategory, createBlog, getAllBlogs, deleteBlog };
