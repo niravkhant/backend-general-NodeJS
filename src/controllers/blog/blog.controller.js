@@ -34,7 +34,7 @@ const createCategory = asyncHandler(async (req, res) => {
       new ApiResponse(
         201,
         createdBlogCategory,
-        "Blog category created Successfully"
+        "Blog category created successfully"
       )
     );
 });
@@ -136,6 +136,36 @@ const getAllBlogs = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, allBlogs, "blogs fetched successfully"));
 });
 
+const getCategory = asyncHandler(async (req, res) => {
+  const allCategories = await BlogCategory.aggregate([
+    {
+      $lookup: {
+        from: "users",
+        localField: "author",
+        foreignField: "_id",
+        as: "author",
+      },
+    },
+    {
+      $addFields: {
+        author: {
+          $first: "$author.fullname",
+        },
+      },
+    },
+  ]);
+
+  if (!allCategories?.length) {
+    throw new ApiError(404, "Categories does not exists");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, allCategories, "Blog categories fetched successfully")
+    );
+});
+
 const deleteBlog = asyncHandler(async (req, res) => {
   const blogId = req.params.id;
 
@@ -147,4 +177,4 @@ const deleteBlog = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(201, blog, "Blog deleted successfully"));
 });
-export { createCategory, createBlog, getAllBlogs, deleteBlog };
+export { createCategory, createBlog, getAllBlogs, deleteBlog, getCategory };
