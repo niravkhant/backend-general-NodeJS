@@ -36,7 +36,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
-
+  console.log("email check: ",isEmailValid(email), email)
   if (!isEmailValid(email)) {
     throw new ApiError(401, "Enter valid email", "Email is not valid");
   }

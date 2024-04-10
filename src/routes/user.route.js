@@ -14,9 +14,10 @@ import { isAdminMiddleware } from "../middlewares/isAdmin.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
+router.use(upload.array());
 
 router.route("/register").post(registerUser);
-router.route("/login").post(upload.array(), loginUser);
+router.route("/login").post(loginUser);
 
 //secure routes
 router.route("/logout").post(verifyJWT, logoutUser);

@@ -41,20 +41,9 @@ const createCategory = asyncHandler(async (req, res) => {
 
 const createBlog = asyncHandler(async (req, res) => {
   const { title, description, categories, status } = req.body;
-  const imageLocalPath = req.files?.image[0]?.path;
 
-  if (!imageLocalPath) {
-    throw new ApiError(400, "image file is required");
-  }
-
-  const image = await uploadOnCloudinary(imageLocalPath);
-
-  if (!image) {
-    throw new ApiError(400, "Image is required");
-  }
-
-  if ([title, description].some((item) => item?.trim() === "")) {
-    throw new ApiError(400, "starred fields are required");
+  if ([title, description, status].some((item) => item?.trim() === "")) {
+    throw new ApiError(400, "All fields are required");
   }
 
   const existedBlog = await Blog.findOne({ title });
@@ -64,14 +53,24 @@ const createBlog = asyncHandler(async (req, res) => {
   }
 
   const category = await BlogCategory.find({ name: categories });
-
   if (!category) {
     throw new ApiError(401, "Category does not exists");
   }
-
   const categoryID = category.map((item) => item._id);
-
-  console.log(categoryID);
+  // console.log(req.files);
+  const emptyFiles = req.files;
+  console.log(emptyFiles);
+  if (!emptyFiles) {
+    throw new ApiError(400, "image file is required");
+  }
+  const imageLocalPath = req.files?.image[0]?.path;
+  if (!imageLocalPath) {
+    throw new ApiError(400, "image file is required");
+  }
+  const image = await uploadOnCloudinary(imageLocalPath);
+  if (!image) {
+    throw new ApiError(400, "Image is required");
+  }
 
   const author = req.user._id;
   const blog = await Blog.create({
@@ -146,6 +145,6 @@ const deleteBlog = asyncHandler(async (req, res) => {
   }
   return res
     .status(201)
-    .json(new ApiResponse(201, blog, "Blog deleted successfully"))
+    .json(new ApiResponse(201, blog, "Blog deleted successfully"));
 });
 export { createCategory, createBlog, getAllBlogs, deleteBlog };
