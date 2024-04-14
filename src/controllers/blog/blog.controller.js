@@ -80,6 +80,7 @@ const createBlog = asyncHandler(async (req, res) => {
     categories: categoryID,
     author: author,
     status: status,
+    slug: title.replace(/\?/g, "").replace(/\s+/g, "-").toLowerCase(),
   });
 
   const createdBlog = await Blog.findById(blog._id);
@@ -162,7 +163,11 @@ const getCategory = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiResponse(200, allCategories, "Blog categories fetched successfully")
+      new ApiResponse(
+        200,
+        allCategories,
+        "Blog categories fetched successfully"
+      )
     );
 });
 
@@ -177,4 +182,62 @@ const deleteBlog = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(201, blog, "Blog deleted successfully"));
 });
-export { createCategory, createBlog, getAllBlogs, deleteBlog, getCategory };
+
+const blogDetail = asyncHandler(async (req, res) => {
+  const singleBlogSlug = req.params.id;
+  const blog = await Blog.aggregate([
+    {
+      $lookup: {
+        from: "users",
+        localField: "author",
+        foreignField: "_id",
+        as: "author",
+      },
+    },
+    {
+      $addFields: {
+        author: {
+          $first: "$author.fullname",
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "blogcategories",
+        localField: "categories",
+        foreignField: "_id",
+        as: "categories",
+      },
+    },
+    {
+      $addFields: {
+        categories: {
+          $first: "$categories.name",
+        },
+      },
+    },
+    {
+      $match: { slug: singleBlogSlug},
+    },
+  ]);
+  if (blog.length === 0) {
+    throw new ApiError(404, "Blog does not found");
+  }
+
+  const foundBlog = blog[0];
+  if (!foundBlog) {
+    throw new ApiError(404, "Blog does not exists");
+  }
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, foundBlog, "Blog details fetched successfully"));
+});
+export {
+  createCategory,
+  createBlog,
+  getAllBlogs,
+  deleteBlog,
+  getCategory,
+  blogDetail,
+};

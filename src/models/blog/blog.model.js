@@ -5,6 +5,15 @@ const blogSchema = new Schema(
     title: {
       type: String,
       required: true,
+      unique: true,
+    },
+    slug:{
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+      lowercase: true,
+      trim: true,
     },
     image:{
       type: String

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createBlog, createCategory, deleteBlog, getAllBlogs, getCategory } from "../../controllers/blog/blog.controller.js";
+import { createBlog, createCategory, deleteBlog, getAllBlogs, getCategory, blogDetail } from "../../controllers/blog/blog.controller.js";
 import { upload } from "../../middlewares/multer.middleware.js";
 import { verifyJWT } from "../../middlewares/auth.middleware.js";
 
@@ -15,9 +15,10 @@ router.route("/create-blog").post(
   verifyJWT,
   createBlog
 );
-router.route("/get-all-blogs").get(getAllBlogs)
-router.route("/create-blogcategory").post(upload.array(),verifyJWT,createCategory)
-router.route("/get-blogcategory").get(verifyJWT,getCategory)
-router.route("/delete-blog/:id").delete(verifyJWT,deleteBlog)
+router.route("/get-all-blogs").get(getAllBlogs);
+router.route("/create-blogcategory").post(upload.array(),verifyJWT,createCategory);
+router.route("/get-blogcategory").get(verifyJWT,getCategory);
+router.route("/delete-blog/:id").delete(verifyJWT,deleteBlog);
+router.route("/blog-detail/:id").get(blogDetail);
 
 export default router;
