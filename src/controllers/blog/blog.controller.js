@@ -233,6 +233,12 @@ const blogDetail = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(201, foundBlog, "Blog details fetched successfully"));
 });
+
+const updateBlog = asyncHandler(async(req, res)=>{
+  const blogSlug = req.params.id;
+  
+  console.log(blogSlug)
+})
 export {
   createCategory,
   createBlog,
@@ -240,4 +246,5 @@ export {
   deleteBlog,
   getCategory,
   blogDetail,
+  updateBlog
 };
