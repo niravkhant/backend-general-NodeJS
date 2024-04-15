@@ -235,9 +235,59 @@ const blogDetail = asyncHandler(async (req, res) => {
 });
 
 const updateBlog = asyncHandler(async(req, res)=>{
-  const blogSlug = req.params.id;
+  const { title, description, categories, status } = req.body;
+  const slug = req.params.id;
+  console.log(title, description, categories, status);
+  if ([title, description, status].some((item) => item?.trim() === "")) {
+    throw new ApiError(400, "All fields are required");
+  }
+
+  const updatedBlog = await Blog.findOneAndUpdate(
+    { slug },
+    {
+      title,
+      description,
+      status,
+    },
+    { new: true } // Return the updated document
+  );
+
+  if (!updatedBlog) {
+    throw new ApiError(404, "Blog not found");
+  }
+
+   // Find the corresponding categories
+   const category = await BlogCategory.find({ name: categories });
+  if (!category) {
+    throw new ApiError(401, "Category does not exists");
+  }
+  const categoryID = category.map((item) => item._id);
+  // console.log(req.files);
+  const emptyFiles = req.files;
   
-  console.log(blogSlug)
+  if (!emptyFiles) {
+    throw new ApiError(400, "image file is required");
+  }
+  const imageLocalPath = req.files?.image[0]?.path;
+  if (!imageLocalPath) {
+    throw new ApiError(400, "image file is required");
+  }
+  const image = await uploadOnCloudinary(imageLocalPath);
+  if (!image) {
+    throw new ApiError(400, "Image is required");
+  }
+
+  const author = req.user._id;
+
+  updatedBlog.image = image?.url || "";
+  updatedBlog.categories = categoryID;
+  updatedBlog.slug = title.replace(/\?/g, "").replace(/\s+/g, "-").toLowerCase(),
+  updatedBlog.author = author,
+  await updatedBlog.save();
+
+  return res
+  .status(201)
+  .json(new ApiResponse(201, updatedBlog, "Blog updated successfully"));
 })
 export {
   createCategory,
