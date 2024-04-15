@@ -59,7 +59,6 @@ const createBlog = asyncHandler(async (req, res) => {
   const categoryID = category.map((item) => item._id);
   // console.log(req.files);
   const emptyFiles = req.files;
-  console.log(emptyFiles);
   if (!emptyFiles) {
     throw new ApiError(400, "image file is required");
   }
@@ -237,7 +236,6 @@ const blogDetail = asyncHandler(async (req, res) => {
 const updateBlog = asyncHandler(async(req, res)=>{
   const { title, description, categories, status } = req.body;
   const slug = req.params.id;
-  console.log(title, description, categories, status);
   if ([title, description, status].some((item) => item?.trim() === "")) {
     throw new ApiError(400, "All fields are required");
   }
@@ -264,7 +262,7 @@ const updateBlog = asyncHandler(async(req, res)=>{
   const categoryID = category.map((item) => item._id);
   // console.log(req.files);
   const emptyFiles = req.files;
-  
+
   if (!emptyFiles) {
     throw new ApiError(400, "image file is required");
   }
