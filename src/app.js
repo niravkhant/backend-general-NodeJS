@@ -29,7 +29,9 @@ import blogRouter from "./routes/blog/blog.route.js";
 /**********************
  * ROUTES DECLARATION *
  **********************/
-
+app.get("/",(req, res)=>{
+  res.send(`<h1> Server is Running...💻</h1>`)
+})
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/blog", blogRouter);
 
