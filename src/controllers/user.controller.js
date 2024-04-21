@@ -1,10 +1,12 @@
 // user.controller.js
+import crypto from "crypto";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { isEmailValid } from "../utils/validation.js";
 import jwt from "jsonwebtoken";
+import { forgotPasswordMailgenContent, sendEmail } from "../utils/mail.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -15,7 +17,7 @@ const generateAccessAndRefreshToken = async (userId) => {
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
-    return {accessToken, refreshToken };
+    return { accessToken, refreshToken };
   } catch (error) {
     throw new ApiError(
       500,
@@ -36,9 +38,8 @@ const registerUser = asyncHandler(async (req, res) => {
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
-  console.log("email check: ",isEmailValid(email), email)
   if (!isEmailValid(email)) {
-    throw new ApiError(401, "Enter valid email", "Email is not valid");
+    throw new ApiError(401, "Email is not valid");
   }
 
   if (existedUser) {
@@ -207,17 +208,115 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, req.user, "current user fetched successfully"));
 });
 
-const getAllUsers = asyncHandler(async(req, res)=>{
+const getAllUsers = asyncHandler(async (req, res) => {
   const allUsers = await User.find().select("-password -refreshToken");
 
-  if(!allUsers) {
-    throw new ApiError(400, "All Users not found or something went wrong")
+  if (!allUsers) {
+    throw new ApiError(400, "All Users not found or something went wrong");
   }
 
+  return res.status(200).json(new ApiResponse(200, allUsers, "All Users"));
+});
+
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ApiError(400, "Email is required");
+  }
+  if (!isEmailValid(email)) {
+    throw new ApiError(400, "Email is not valid");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new ApiError(404, "User with this email not found");
+  }
+
+  // send email with reset password link
+  const { unHashedToken, hashedToken, tokenExpiry } = user.generateTemporaryToken();
+
+  // save the hashed version a of the token and expiry in the DB
+  user.forgotPasswordToken = hashedToken;
+  user.forgotPasswordExpiry = tokenExpiry;
+  await user.save({ validateBeforeSave: false });
+
+   // Send mail with the password reset link. It should be the link of the frontend url with token
+   await sendEmail({
+    email: user?.email,
+    subject: "Password reset request",
+    mailgenContent: forgotPasswordMailgenContent(
+      user.username,
+      // ! NOTE: Following link should be the link of the frontend page responsible to request password reset
+      // ! Frontend will send the below token with the new password in the request body to the backend reset password endpoint
+      // * Ideally take the url from the .env file which should be teh url of the frontend
+      `${req.protocol}://${req.get(
+        "host"
+      )}/api/v1/users/reset-password/${unHashedToken}`
+    ),
+  });
   return res
     .status(200)
-    .json(new ApiResponse(200, allUsers, "All Users"));
-})
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        "Password reset link has been sent on your email"
+      )
+    );
+});
+
+const resetForgottenPassword = asyncHandler(async (req, res) => {
+  const { resetToken } = req.params;
+  const { newPassword , confirmNewPassword } = req.body;
+
+  if (newPassword === "") {
+    throw new ApiError(401, "Password is required");
+  }
+
+  if (!resetToken) {
+    throw new ApiError(401, "Reset password token not found");
+  }
+
+
+
+  if (newPassword !== confirmNewPassword) {
+    throw new ApiError(401, "Password does not match");
+  }
+
+  // Create a hash of the incoming reset token
+
+  let hashedToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  // See if user with hash similar to resetToken exists
+  // If yes then check if token expiry is greater than current date
+
+  const user = await User.findOne({
+    forgotPasswordToken: hashedToken,
+    forgotPasswordExpiry: { $gt: Date.now() },
+  });
+
+  // If either of the one is false that means the token is invalid or expired
+  if (!user) {
+    throw new ApiError(489, "Token is invalid or expired");
+  }
+
+  // if everything is ok and token id valid
+  // reset the forgot password token and expiry
+  user.forgotPasswordToken = undefined;
+  user.forgotPasswordExpiry = undefined;
+
+  // Set the provided password as the new password
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password reset successfully"));
+});
 
 export {
   registerUser,
@@ -226,5 +325,7 @@ export {
   refreshAccessToken,
   changeCurrentPassword,
   getCurrentUser,
-  getAllUsers
+  getAllUsers,
+  forgotPassword,
+  resetForgottenPassword
 };
