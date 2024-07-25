@@ -25,6 +25,7 @@ app.use(cookieParser());
 
 import userRouter from "./routes/user.route.js";
 import blogRouter from "./routes/blog/blog.route.js";
+import otherRouter from "./routes/other/upload.route.js";
 
 /**********************
  * ROUTES DECLARATION *
@@ -34,6 +35,7 @@ app.get("/",(req, res)=>{
 })
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/blog", blogRouter);
+app.use("/api/v1", otherRouter);
 
 /*******************************
  * Global ApiError as response *
